@@ -74,6 +74,7 @@ private:
 public:
 
     Store() : file_name(("temp")), size(sizeof(char)), fileSize(0), file(file_name, ios::out | ios::binary) {
+        remove(file_name);
         //file.open(file_name);
 //        counter++;
     }
@@ -94,9 +95,9 @@ public:
     }
 
     void write(const char &c, int i) {
-        file.open(file_name, ios::out | ios::binary);
+        file.open(file_name, ios::binary | ios::out | ios::in);
         //TODO check counter range and what happened to file
-        file.seekg(i * size);
+        file.seekp(i * size, ios::beg);
         file.write(reinterpret_cast<const char*>(&c),size);
         file.close();
     }
@@ -120,6 +121,7 @@ int main() {
     my_s.append(b);
     my_s.append(e);
     my_s.append(r);
+    my_s.write(b, 0);
 //    my_s.append(*(c+4));
 //    g = my_s.read(0);
     cout << my_s.read(3);
