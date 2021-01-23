@@ -3,4 +3,4 @@ project(Ex5)
 
 set(CMAKE_CXX_STANDARD 98)
 
-add_executable(Ex5 main.cpp Store.h Tiyuta.cpp)
+add_executable(Ex5 Store.h Tiyuta.cpp)
