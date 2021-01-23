@@ -203,17 +203,161 @@ public:
     }
 
 };
+
+template<>
+class Store<double> {
+private:
+    const char *file_name;
+    unsigned int size; //size of object
+    unsigned int fileSize; //number of objects in storage
+    fstream file;
+    static int counter;
+
+
+public:
+
+    Store() : file_name(("temp")), size(sizeof(double )), fileSize(0), file() {
+        counter++;
+    }
+    Store(char *name) : file_name((name)), size(sizeof(double )), fileSize(0),  file() {
+
+    }
+
+
+    void append(double &d) {
+        file.open(file_name, ios::app | ios::binary);
+        if (!file){
+            stringstream ss1, ss2(file_name);
+            ss1 << "Could not open the file ";
+            ss1 << ss2.str() << "\n";
+            throw runtime_error( ss1.str());
+        }
+        file.write(reinterpret_cast<const char*>(&d), size);
+        file.close();
+        fileSize++;
+    }
+
+    void write(const int &n, int i) {
+        file.open(file_name, ios::binary | ios::out | ios::in);
+        if (!file){
+            stringstream ss1, ss2(file_name);
+            ss1 << "Could not open the file ";
+            ss1 << ss2.str() << "\n";
+            throw runtime_error( ss1.str());
+        }
+        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        file.seekp(i * size, ios::beg);
+        file.write(reinterpret_cast<const char*>(&n),size);
+        file.close();
+    }
+
+    double &read(int i) { // TODO check index bounds
+        double * buff = new double (1);
+        file.open(file_name, ios::in | ios::binary);
+        if (!file){
+            stringstream ss1, ss2(file_name);
+            ss1 << "Could not open the file ";
+            ss1 << ss2.str() << "\n";
+            throw runtime_error( ss1.str());
+        }
+        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        file.seekg(i * size);
+        file.read((char*)buff, size);
+        file.close();
+        return *buff;
+    }
+
+};
+
+template<>
+class Store<bool> {
+private:
+    const char *file_name;
+    unsigned int size; //size of object
+    unsigned int fileSize; //number of objects in storage
+    fstream file;
+    static int counter;
+
+
+public:
+
+    Store() : file_name(("temp")), size(sizeof(bool)), fileSize(0), file() {
+        counter++;
+    }
+    Store(char *name) : file_name((name)), size(sizeof(bool )), fileSize(0),  file() {
+
+    }
+
+
+    void append(bool &b) {
+        file.open(file_name, ios::app | ios::binary);
+        if (!file){
+            stringstream ss1, ss2(file_name);
+            ss1 << "Could not open the file ";
+            ss1 << ss2.str() << "\n";
+            throw runtime_error( ss1.str());
+        }
+        file.write(reinterpret_cast<const char*>(&b), size);
+        file.close();
+        fileSize++;
+    }
+
+    void write(const bool &b, int i) {
+        file.open(file_name, ios::binary | ios::out | ios::in);
+        if (!file){
+            stringstream ss1, ss2(file_name);
+            ss1 << "Could not open the file ";
+            ss1 << ss2.str() << "\n";
+            throw runtime_error( ss1.str());
+        }
+        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        file.seekp(i * size, ios::beg);
+        file.write(reinterpret_cast<const char*>(&b),size);
+        file.close();
+    }
+
+   bool read(int i) { // TODO check index bounds
+        bool * buff = new bool(true) ;
+        file.open(file_name, ios::in | ios::binary);
+        if (!file){
+            stringstream ss1, ss2(file_name);
+            ss1 << "Could not open the file ";
+            ss1 << ss2.str() << "\n";
+            throw runtime_error( ss1.str());
+        }
+        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        file.seekg(i * size);
+        file.read((char*)buff, size);
+        file.close();
+        return *buff;
+    }
+
+};
 int main() {
     char c ='a', b='f', e = 'r' , r= 'd' ;
 
-    Store<int> s("TestInt.bin");
-    for (int k = 0; k < 10; k++) {
+    Store<double> s("TestDouble.bin");
+    for (double k = 0; k < 10; k++) {
         s.append(k);
     }
-    s.write(3, 10);
     for (int k = 0; k < 10; k++) {
-        int m = s.read(k);
+        double m = s.read(k);
         cout << m << " ";
     }
+    cout << endl;
+
+
+    Store<bool> boo("BoolTest");
+    bool arr [] = {true,false,false,true,true,false,true};
+    for (bool & j : arr) {
+        boo.append(j);
+    }
+    boo.write(false, 0);
+    for (int j = 0; j < 7; ++j) {
+        string res = boo.read(j) ? "true, " : "false, ";
+        cout<<res;
+    }
+
     return 0;
+
 }

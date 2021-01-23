@@ -5,11 +5,6 @@
 #ifndef EX5_STORE_H
 #define EX5_STORE_H
 
-//template<T>
-//class Store {
-//
-//
-//};
 
 
 #endif //EX5_STORE_H
