@@ -1,18 +1,31 @@
-////
-//// Created by tal5s on 23/01/2021.
-////
 //
-//#include "Store.h"
+// Created by tal5s on 23/01/2021.
 //
-//int main(){
-//    Store<bool> booliany ("bool_test");
-//    booliany.append(false);
-//    booliany.append(true);
-//    booliany.append(false);
-//    booliany.append(true);
-//    cout << booliany.read(0);
-//    cout << booliany.read(1);
-//    cout << booliany.read(2);
-//    cout << booliany.read(3);
-//    return 0;
-//};
+
+#include "DataStore.h"
+
+int main(){
+    DataStore dataStore= DataStore();
+    dataStore.create<bool>("bool_test");
+
+    dataStore.store<bool>()->append(true);
+    dataStore.store<bool>()->append(true);
+    dataStore.store<bool>()->append(true);
+    dataStore.store<bool>()->append(false);
+    cout << dataStore.store<bool>()->read(0);
+    cout << dataStore.store<bool>()->read(1);
+    cout << dataStore.store<bool>()->read(2);
+    cout << dataStore.store<bool>()->read(3);
+    cout << endl;
+    Store<char> c("char_test");
+    char abc[] = "gfda";
+    for (int j = 0; j < 4; ++j) {
+        c.append(abc[j]);
+    }
+    dataStore.load<char>("char_test");
+    for (int j = 0; j < 4; ++j) {
+        cout << dataStore.store<char>()->read(j);
+    }
+
+    return 0;
+};

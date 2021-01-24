@@ -30,9 +30,20 @@ public:
 
     Store() : file_name(("temp")), size(sizeof(T)), fileSize(0), file() {
         counter++;
+        file.open(file_name, ios::app | ios::binary);
+        if(file.peek() == std::ifstream::traits_type::eof())
+        {
+            file.write(typeid(T).name(), sizeof (typeid(T).name()));
+        }
+        file.close();
     }
 
     Store(const char *name) : file_name((name)), size(sizeof(T)), fileSize(0), file() {
+        file.open(file_name, ios::app | ios::binary);
+        if(file.peek() == std::ifstream::traits_type::eof())
+        {
+            file.write(typeid(T).name(), sizeof (typeid(T).name()));
+        }
     }
 
 
@@ -55,7 +66,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekp( i * size, ios::beg);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         const char *temp = obj.serialized();
         file.write(temp, size);
         file.close();
@@ -71,7 +84,9 @@ public:
         }if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         char buff[size];
         T obj;
-        file.seekg(i * size);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.read(buff, size);
         file.close();
         return obj.deserialized(buff);
@@ -93,7 +108,7 @@ public:
     Store() : file_name(("temp")), size(sizeof(char)), fileSize(0), file() {
         counter++;
     }
-    Store(char *name) : file_name((name)), size(sizeof(char)), fileSize(0),  file() {
+    Store(const char *name) : file_name((name)), size(sizeof(char)), fileSize(0),  file() {
 
     }
 
@@ -120,13 +135,15 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekp(i * size, ios::beg);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.write(reinterpret_cast<const char*>(&c),size);
         file.close();
     }
 
     char &read(int i) { // TODO check index bounds
-        char buff;
+        char buff = 0;
         file.open(file_name, ios::in | ios::binary);
         if (!file){
             stringstream ss1, ss2(file_name);
@@ -135,7 +152,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekg(i * size);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.read(&buff, size);
         file.close();
         return *(strdup(reinterpret_cast<const char *>(&buff)));
@@ -187,7 +206,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekp(i * size, ios::beg);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.write(reinterpret_cast<const char*>(&n),size);
         file.close();
     }
@@ -202,7 +223,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekg(i * size);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.read((char*)buff, size);
         file.close();
         return *buff;
@@ -252,7 +275,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekp(i * size, ios::beg);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.write(reinterpret_cast<const char*>(&n),size);
         file.close();
     }
@@ -267,7 +292,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekg(i * size);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.read((char*)buff, size);
         file.close();
         return *buff;
@@ -290,12 +317,12 @@ public:
     Store() : file_name(("temp")), size(sizeof(bool)), fileSize(0), file() {
         counter++;
     }
-    Store(char *name) : file_name((name)), size(sizeof(bool )), fileSize(0),  file() {
+    Store(const char *name) : file_name((name)), size(sizeof(bool )), fileSize(0),  file() {
 
     }
 
 
-    void append(bool &b) {
+    void append(const bool &b) {
         file.open(file_name, ios::app | ios::binary);
         if (!file){
             stringstream ss1, ss2(file_name);
@@ -317,13 +344,15 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekp(i * size, ios::beg);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.write(reinterpret_cast<const char*>(&b),size);
         file.close();
     }
 
     bool read(int i) { // TODO check index bounds
-        bool * buff = new bool(true) ;
+        bool * buff = new bool() ;
         file.open(file_name, ios::in | ios::binary);
         if (!file){
             stringstream ss1, ss2(file_name);
@@ -332,7 +361,9 @@ public:
             throw runtime_error( ss1.str());
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
-        file.seekg(i * size);
+        file.seekg(0, ios_base::end);
+        int length = file.tellg();
+        file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.read((char*)buff, size);
         file.close();
         return *buff;
