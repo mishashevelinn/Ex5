@@ -1,22 +1,20 @@
-//
-// Created by misha on 22/01/2021.
-//
-
 #ifndef EX5_STORE_H
 #define EX5_STORE_H
-//
-// Created by misha on 22/01/2021.
-//
-#include <exception>
+
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <cstring>
 #include <sstream>
-#include <tr1/cstdint>
 #include "StoreBase.h"
 using namespace std;
-int i = 0;
+class FileNotFoundException{};
+/*
+ * Generic store, requires methods:
+ * --serialized() - returns char array representing an object
+ *--deserialized() - returns an object, represented by char array
+ * Big three implementation is required
+ */
 template<class T>
 class Store : public StoreBase{
 private:
@@ -24,32 +22,60 @@ private:
     unsigned int size; //size of object
     unsigned int fileSize; //number of objects in storage
     fstream file;
-    static int counter;
 
 public:
-
+    /*
+     * Default constructor.
+     * Creates temp file
+     * Checks if file is previously initialized.
+     * If file is not initialized, writes the class name int the beginning of file
+     * */
     Store() : file_name(("temp")), size(sizeof(T)), fileSize(0), file() {
-        counter++;
-        file.open(file_name, ios::app | ios::binary);
-        if(file.peek() == std::ifstream::traits_type::eof())
-        {
-            file.write(typeid(T).name(), sizeof (typeid(T).name()));
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0){
+            file.seekp(0, ios::beg);
+            file.write(typeid(T).name(), strlen(typeid(T).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(T).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
         }
         file.close();
     }
 
+    /*Same as default constructor, except a parameter - file name*/
     Store(const char *name) : file_name((name)), size(sizeof(T)), fileSize(0), file() {
-        file.open(file_name, ios::app | ios::binary);
-        if(file.peek() == std::ifstream::traits_type::eof())
-        {
-            file.write(typeid(T).name(), sizeof (typeid(T).name()));
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0){
+            file.seekp(0, ios::beg);
+            file.write(typeid(T).name(), strlen(typeid(T).name()));
         }
+        else{
+            int typeSize = strlen(typeid(T).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
 
 
+    /*
+     * Writes a sequence of bytes, representing an object to an end of binary file
+     * Bytes sequence produced by serialized() method
+     * */
     void append(const T &obj) {
 
         file.open(file_name, ios::app | ios::binary);
+       if(file.fail()){
+           throw FileNotFoundException();
+       }
         const char *temp = obj.serialized();
         file.write(temp, size);
         file.close();
@@ -57,13 +83,13 @@ public:
 
     }
 
+    /*Same as append, except for getting certain index to be writen at in binary file
+     * Performs bounds check, since index is involved
+     * */
     void write(const T &obj, int i) {
         file.open(file_name, ios::out | ios::in | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
+        if (file.fail()){
+            throw FileNotFoundException();
         }
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
@@ -74,24 +100,27 @@ public:
         file.close();
     }
 
-    T &read(int i) { // TODO check index bounds
+    /*Gets index of byte sequence in binary file and returns an
+     * object, represented by a sequence by invoking deserialized() method*/
+    T &read(int i) {
         file.open(file_name, ios::in | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
+        if (file.fail()){
+            throw FileNotFoundException();
         }if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         char buff[size];
-        T obj;
+        T obj = T();
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
         file.read(buff, size);
         file.close();
-        return obj.deserialized(buff);
+        obj.deserialized(buff);
+        return obj;
     }
 };
+
+/*Following classes are specializations for primitive types.
+ * The functionality is as in generic analog.*/
 
 template<>
 class Store<char> : public StoreBase{
@@ -100,27 +129,46 @@ private:
     unsigned int size; //size of object
     unsigned int fileSize; //number of objects in storage
     fstream file;
-    static int counter;
-
 
 public:
-
     Store() : file_name(("temp")), size(sizeof(char)), fileSize(0), file() {
-        counter++;
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0){
+            file.seekp(0, ios::beg);
+            file.write(typeid(char).name(), strlen(typeid(char).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(char).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
     Store(const char *name) : file_name((name)), size(sizeof(char)), fileSize(0),  file() {
-
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(char).name(), 1);
+        }
+        else{
+            int typeSize = strlen(typeid(char).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
 
 
     void append(char &c) {
         file.open(file_name, ios::app | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         file.write(reinterpret_cast<const char*>(&c), size);
         file.close();
         fileSize++;
@@ -128,12 +176,7 @@ public:
 
     void write(const char &c, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -142,15 +185,10 @@ public:
         file.close();
     }
 
-    char &read(int i) { // TODO check index bounds
+    char &read(int i) {
         char buff = 0;
         file.open(file_name, ios::in | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -159,10 +197,7 @@ public:
         file.close();
         return *(strdup(reinterpret_cast<const char *>(&buff)));
     }
-
 };
-
-
 
 template<>
 class Store<int>: public StoreBase {
@@ -171,27 +206,47 @@ private:
     unsigned int size; //size of object
     unsigned int fileSize; //number of objects in storage
     fstream file;
-    static int counter;
-
 
 public:
-
     Store() : file_name(("temp")), size(sizeof(int)), fileSize(0), file() {
-        counter++;
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(int).name(), strlen(typeid(int).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(int).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
     Store(char *name) : file_name((name)), size(sizeof(int)), fileSize(0),  file() {
-
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(int).name(), strlen(typeid(int).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(int).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
 
 
     void append(int &n) {
         file.open(file_name, ios::app | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         file.write(reinterpret_cast<const char*>(&n), size);
         file.close();
         fileSize++;
@@ -199,12 +254,7 @@ public:
 
     void write(const int &n, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -213,15 +263,10 @@ public:
         file.close();
     }
 
-    int &read(int i) { // TODO check index bounds
+    int &read(int i) {
         int *buff = new int(1);
         file.open(file_name, ios::in | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -240,27 +285,49 @@ private:
     unsigned int size; //size of object
     unsigned int fileSize; //number of objects in storage
     fstream file;
-    static int counter;
-
 
 public:
 
     Store() : file_name(("temp")), size(sizeof(double )), fileSize(0), file() {
-        counter++;
+
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(double).name(), strlen(typeid(double).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(double).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
     Store(char *name) : file_name((name)), size(sizeof(double )), fileSize(0),  file() {
-
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(double).name(), strlen(typeid(double).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(double).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
 
 
     void append(double &d) {
         file.open(file_name, ios::app | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         file.write(reinterpret_cast<const char*>(&d), size);
         file.close();
         fileSize++;
@@ -268,12 +335,7 @@ public:
 
     void write(const int &n, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -282,15 +344,10 @@ public:
         file.close();
     }
 
-    double &read(int i) { // TODO check index bounds
+    double &read(int i) {
         double * buff = new double (1);
         file.open(file_name, ios::in | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -309,27 +366,47 @@ private:
     unsigned int size; //size of object
     unsigned int fileSize; //number of objects in storage
     fstream file;
-    static int counter;
-
-
 public:
 
     Store() : file_name(("temp")), size(sizeof(bool)), fileSize(0), file() {
-        counter++;
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(bool).name(), strlen(typeid(bool).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(bool).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
     Store(const char *name) : file_name((name)), size(sizeof(bool )), fileSize(0),  file() {
-
+        file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
+        if (file.fail()) throw FileNotFoundException();
+        if(file.tellg() == 0)
+        {
+            file.seekp(0, ios::beg);
+            file.write(typeid(bool).name(), strlen(typeid(bool).name()));
+        }
+        else{
+            int typeSize = strlen(typeid(bool).name());
+            file.seekp(typeSize);
+            file.seekg(0, ios_base::end);
+            int length = file.tellg();
+            fileSize = (length - typeSize)/size;
+        }
+        file.close();
     }
 
 
     void append(const bool &b) {
         file.open(file_name, ios::app | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         file.write(reinterpret_cast<const char*>(&b), size);
         file.close();
         fileSize++;
@@ -337,12 +414,7 @@ public:
 
     void write(const bool &b, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -351,15 +423,10 @@ public:
         file.close();
     }
 
-    bool read(int i) { // TODO check index bounds
+    bool read(int i) {
         bool * buff = new bool() ;
         file.open(file_name, ios::in | ios::binary);
-        if (!file){
-            stringstream ss1, ss2(file_name);
-            ss1 << "Could not open the file ";
-            ss1 << ss2.str() << "\n";
-            throw runtime_error( ss1.str());
-        }
+        if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
@@ -373,3 +440,4 @@ public:
 
 
 #endif //EX5_STORE_H
+s

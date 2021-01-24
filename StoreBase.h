@@ -5,7 +5,9 @@
 #ifndef EX5_STOREBASE_H
 #define EX5_STOREBASE_H
 
-
+/*
+ * empty base class for Store classes to derive from
+ */
 class StoreBase {
 public:
     virtual ~StoreBase(){};
