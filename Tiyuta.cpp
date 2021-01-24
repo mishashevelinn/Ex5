@@ -8,11 +8,11 @@
 #include <cstring>
 #include <sstream>
 #include <tr1/cstdint>
-
+#include "StoreBase.h"
 using namespace std;
 int i = 0;
 template<class T>
-class Store {
+class Store : public StoreBase{
 private:
     const char *file_name;
     unsigned int size; //size of object
@@ -73,7 +73,7 @@ public:
 };
 
 template<>
-class Store<char> {
+class Store<char> : public StoreBase{
 private:
     const char *file_name;
     unsigned int size; //size of object
@@ -140,7 +140,7 @@ public:
 
 
 template<>
-class Store<int> {
+class Store<int>: public StoreBase {
 private:
     const char *file_name;
     unsigned int size; //size of object
@@ -205,7 +205,7 @@ public:
 };
 
 template<>
-class Store<double> {
+class Store<double>: public StoreBase {
 private:
     const char *file_name;
     unsigned int size; //size of object
@@ -270,7 +270,7 @@ public:
 };
 
 template<>
-class Store<bool> {
+class Store<bool> : public StoreBase{
 private:
     const char *file_name;
     unsigned int size; //size of object
