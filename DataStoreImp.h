@@ -56,13 +56,15 @@ void DataStore::load(const char *fileName) {
  */
 template<typename T>
 Store<T>*  DataStore::store() {
+    Store<T>* store;
     if (mapOfStores.count(typeid(T).name()) != 1) throw StoreNotFoundException();
     try {
-        return dynamic_cast<Store<T>*>( mapOfStores[typeid(T).name()]);
+        store = dynamic_cast<Store<T>*>( mapOfStores[typeid(T).name()]);
     }
     catch (bad_cast &bc) {
         cout << bc.what() << endl;
     }
+    return store;
 }
 
 

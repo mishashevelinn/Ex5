@@ -7,6 +7,9 @@
 #include <cstring>
 #include <sstream>
 #include "StoreBase.h"
+#include <typeinfo>
+#include <stdexcept>
+#include <memory>
 using namespace std;
 class FileNotFoundException{};
 /*
@@ -91,7 +94,7 @@ public:
         if (file.fail()){
             throw FileNotFoundException();
         }
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -106,7 +109,7 @@ public:
         file.open(file_name, ios::in | ios::binary);
         if (file.fail()){
             throw FileNotFoundException();
-        }if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        }if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         char buff[size];
         T obj = T();
         file.seekg(0, ios_base::end);
@@ -127,7 +130,7 @@ class Store<char> : public StoreBase{
 private:
     const char *file_name;
     unsigned int size; //size of object
-    unsigned int fileSize; //number of objects in storage
+    int fileSize; //number of objects in storage
     fstream file;
 
 public:
@@ -177,7 +180,7 @@ public:
     void write(const char &c, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
         if (file.fail()) throw FileNotFoundException();
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -189,7 +192,7 @@ public:
         char buff = 0;
         file.open(file_name, ios::in | ios::binary);
         if (file.fail()) throw FileNotFoundException();
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -204,7 +207,7 @@ class Store<int>: public StoreBase {
 private:
     const char *file_name;
     unsigned int size; //size of object
-    unsigned int fileSize; //number of objects in storage
+    int fileSize; //number of objects in storage
     fstream file;
 
 public:
@@ -225,7 +228,7 @@ public:
         }
         file.close();
     }
-    Store(char *name) : file_name((name)), size(sizeof(int)), fileSize(0),  file() {
+    Store(const char *name) : file_name((name)), size(sizeof(int)), fileSize(0),  file() {
         file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
         if (file.fail()) throw FileNotFoundException();
         if(file.tellg() == 0)
@@ -255,7 +258,7 @@ public:
     void write(const int &n, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
         if (file.fail()) throw FileNotFoundException();
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -267,7 +270,7 @@ public:
         int *buff = new int(1);
         file.open(file_name, ios::in | ios::binary);
         if (file.fail()) throw FileNotFoundException();
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -283,7 +286,7 @@ class Store<double>: public StoreBase {
 private:
     const char *file_name;
     unsigned int size; //size of object
-    unsigned int fileSize; //number of objects in storage
+    int fileSize; //number of objects in storage
     fstream file;
 
 public:
@@ -306,7 +309,7 @@ public:
         }
         file.close();
     }
-    Store(char *name) : file_name((name)), size(sizeof(double )), fileSize(0),  file() {
+    Store(const char *name) : file_name((name)), size(sizeof(double )), fileSize(0),  file() {
         file.open(file_name, ios::app | ios::binary | ios::in | ios::out);
         if (file.fail()) throw FileNotFoundException();
         if(file.tellg() == 0)
@@ -336,7 +339,7 @@ public:
     void write(const int &n, int i) {
         file.open(file_name, ios::binary | ios::out | ios::in);
         if (file.fail()) throw FileNotFoundException();
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -348,7 +351,7 @@ public:
         double * buff = new double (1);
         file.open(file_name, ios::in | ios::binary);
         if (file.fail()) throw FileNotFoundException();
-        if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
+        if (i < 0 || i>= fileSize) throw std::range_error("index is out of bounds\n");
         file.seekg(0, ios_base::end);
         int length = file.tellg();
         file.seekg((length - (fileSize-i)*size), ios_base::beg);
@@ -364,7 +367,7 @@ class Store<bool> : public StoreBase{
 private:
     const char *file_name;
     unsigned int size; //size of object
-    unsigned int fileSize; //number of objects in storage
+    int fileSize; //number of objects in storage
     fstream file;
 public:
 
@@ -424,7 +427,8 @@ public:
     }
 
     bool read(int i) {
-        bool * buff = new bool() ;
+
+        bool * buff = new bool();
         file.open(file_name, ios::in | ios::binary);
         if (file.fail()) throw FileNotFoundException();
         if (i < 0 || i>= fileSize) throw range_error("index is out of bounds\n");
@@ -440,4 +444,3 @@ public:
 
 
 #endif //EX5_STORE_H
-s

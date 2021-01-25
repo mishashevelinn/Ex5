@@ -9,6 +9,7 @@
 #include <vector>
 #include <typeinfo>
 #include "Store.h"
+
 using namespace std;
 /*
  * DataStore can have any class of Store<T> type. it has map with typeid (key) and it's Store as value.
@@ -37,3 +38,4 @@ public:
 };
 #include "DataStoreImp.h"
 #endif //EX5_DATASTORE_H
+
